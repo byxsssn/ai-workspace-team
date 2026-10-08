@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ai_workspace.api.dependencies.auth import get_current_user
 from ai_workspace.db.session import get_db_session
 from ai_workspace.models import User
-from ai_workspace.schemas import ConversationCreateRequest, ConversationResponse
+from ai_workspace.schemas import (
+    ConversationCreateRequest,
+    ConversationDetailResponse,
+    ConversationResponse,
+    MessageResponse,
+)
 from ai_workspace.services import ConversationNotFoundError, ConversationService
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
@@ -38,14 +43,14 @@ async def list_conversations(
     return [ConversationResponse.model_validate(item) for item in conversations]
 
 
-@router.get("/{conversation_id}", response_model=ConversationResponse)
+@router.get("/{conversation_id}", response_model=ConversationDetailResponse)
 async def get_conversation(
     conversation_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
-) -> ConversationResponse:
+) -> ConversationDetailResponse:
     try:
-        conversation = await ConversationService(session).get(
+        conversation, messages = await ConversationService(session).get_with_messages(
             conversation_id, current_user.id
         )
     except ConversationNotFoundError as exc:
@@ -54,4 +59,7 @@ async def get_conversation(
             detail="Conversation not found",
         ) from exc
 
-    return ConversationResponse.model_validate(conversation)
+    return ConversationDetailResponse(
+        **ConversationResponse.model_validate(conversation).model_dump(),
+        messages=[MessageResponse.model_validate(message) for message in messages],
+    )

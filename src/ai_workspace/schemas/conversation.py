@@ -17,3 +17,16 @@ class ConversationResponse(BaseModel):
     title: str
     created_at: datetime
     updated_at: datetime
+
+
+class MessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    role: str
+    content: str
+    created_at: datetime
+
+
+class ConversationDetailResponse(ConversationResponse):
+    messages: list[MessageResponse]

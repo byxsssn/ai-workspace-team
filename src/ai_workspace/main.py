@@ -1,6 +1,9 @@
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from ai_workspace.api.routes.auth import router as auth_router
 from ai_workspace.api.routes.chat import router as chat_router
@@ -35,6 +38,14 @@ app.include_router(auth_router)
 app.include_router(conversations_router)
 app.include_router(chat_router)
 app.include_router(provider_credentials_router)
+
+static_directory = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=static_directory), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def workspace() -> FileResponse:
+    return FileResponse(static_directory / "index.html")
 
 
 @app.get("/health")

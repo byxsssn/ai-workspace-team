@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ai_workspace.api.dependencies.auth import get_current_user
 from ai_workspace.db.session import get_db_session
 from ai_workspace.main import app
-from ai_workspace.models import Conversation, User
+from ai_workspace.models import Conversation, Message, User
 from ai_workspace.services import ConversationNotFoundError, ConversationService
 
 
@@ -115,7 +115,7 @@ def test_get_conversation_returns_200(
 ) -> None:
     client, user, service = client_user_service
     conversation = make_conversation(user.id, "Existing conversation")
-    service.get.return_value = conversation
+    service.get_with_messages.return_value = (conversation, [])
 
     response = client.get(f"/conversations/{conversation.id}")
 
@@ -125,8 +125,9 @@ def test_get_conversation_returns_200(
         "title": "Existing conversation",
         "created_at": "2026-09-24T12:00:00Z",
         "updated_at": "2026-09-24T13:00:00Z",
+        "messages": [],
     }
-    service.get.assert_awaited_with(conversation.id, user.id)
+    service.get_with_messages.assert_awaited_with(conversation.id, user.id)
 
 
 def test_get_missing_conversation_returns_404(
@@ -134,10 +135,72 @@ def test_get_missing_conversation_returns_404(
 ) -> None:
     client, user, service = client_user_service
     conversation_id = uuid4()
-    service.get.side_effect = ConversationNotFoundError("Private lookup details")
+    service.get_with_messages.side_effect = ConversationNotFoundError(
+        "Private lookup details"
+    )
 
     response = client.get(f"/conversations/{conversation_id}")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Conversation not found"}
-    service.get.assert_awaited_with(conversation_id, user.id)
+    service.get_with_messages.assert_awaited_with(conversation_id, user.id)
+
+
+def test_list_messages_returns_history_in_service_order(
+    client_user_service: tuple[TestClient, User, Mock],
+) -> None:
+    client, user, service = client_user_service
+    conversation = make_conversation(user.id, "With history")
+    conversation_id = conversation.id
+    messages = [
+        Message(
+            id=uuid4(),
+            conversation_id=conversation_id,
+            role=role,
+            content=content,
+            created_at=datetime(2026, 10, 8, 12, 0, tzinfo=UTC),
+        )
+        for role, content in [("user", "问题"), ("assistant", "  回答\n保持原文  ")]
+    ]
+    service.get_with_messages.return_value = (conversation, messages)
+
+    response = client.get(f"/conversations/{conversation_id}")
+
+    assert response.status_code == 200
+    assert response.json()["messages"] == [
+        {
+            "id": str(message.id),
+            "role": message.role,
+            "content": message.content,
+            "created_at": "2026-10-08T12:00:00Z",
+        }
+        for message in messages
+    ]
+    service.get_with_messages.assert_awaited_once_with(conversation_id, user.id)
+
+
+def test_list_messages_hides_missing_or_unowned_conversations(
+    client_user_service: tuple[TestClient, User, Mock],
+) -> None:
+    client, user, service = client_user_service
+    conversation_id = uuid4()
+    service.get_with_messages.side_effect = ConversationNotFoundError("Private details")
+
+    response = client.get(f"/conversations/{conversation_id}")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Conversation not found"}
+    service.get_with_messages.assert_awaited_once_with(conversation_id, user.id)
+
+
+def test_list_messages_requires_authentication(
+    client_user_service: tuple[TestClient, User, Mock],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _, service = client_user_service
+    with monkeypatch.context() as override:
+        override.delitem(app.dependency_overrides, get_current_user)
+        response = client.get(f"/conversations/{uuid4()}")
+
+    assert response.status_code == 401
+    service.get_with_messages.assert_not_awaited()

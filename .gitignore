@@ -11,3 +11,7 @@ wheels/
 
 # Local environment configuration
 .env
+
+# Optional browser verification and screenshots
+node_modules/
+artifacts/

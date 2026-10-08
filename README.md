@@ -17,6 +17,35 @@ Run `uv run alembic upgrade head`, then
 `uv run uvicorn ai_workspace.main:app --reload`. Interactive API documentation is
 available at `/docs`, and `/health` reports application health.
 
+## Web workspace
+
+Open `http://127.0.0.1:8000/` after starting Uvicorn to use the Chinese chat UI.
+The frontend is served by FastAPI from `src/ai_workspace/static`; there is no
+frontend build step or separate development server.
+
+- Register or sign in from the top right or the account entry at the bottom left.
+- In **API 连接**, save your OpenRouter API key. Keys are encrypted server-side;
+  the frontend never stores them or reads them back. You can replace or remove a key.
+- Return to chat, select a model by its OpenRouter model ID and optionally select
+  reasoning effort. Use a model that supports the Responses API.
+- Send with Enter, insert a newline with Shift+Enter. Replies use the existing
+  non-streaming chat endpoint. A failed turn restores the draft; network failures
+  advise checking saved history before retrying because completion is uncertain.
+- The sidebar lists and searches your saved conversation titles. Selecting a
+  conversation reads the `messages` JSON array in authenticated
+  `GET /conversations/{conversation_id}`. Ownership is checked before reading
+  history, which retains chronological order and is rendered as user/assistant
+  turns alternating from the first entry. The database still uses its existing
+  message table; the conversation detail response aggregates it into JSON.
+- **账户** shows email, user ID, creation time and active status from `/users/me`,
+  with local sign-out. Editing profiles and deleting accounts are not implemented
+  because the current user API does not expose these operations.
+
+The access token is kept in per-tab `sessionStorage` and cleared on logout or a
+401 response. Model/effort preferences are saved in `localStorage`. No API key or
+conversation content is written to browser storage. The UI supports a collapsible
+sidebar, mobile screens, keyboard navigation and safe text/code rendering.
+
 Register through `POST /users/register`, sign in through `POST /auth/login`, and
 use the returned Bearer token for authenticated requests. Save an OpenRouter key
 with `PUT /providers/openrouter` using only an `api_key` field. Create a conversation
@@ -134,6 +163,22 @@ A failed database commit cannot undo an already billed model request.
 ## Verification
 
 Run `uv run ruff check src tests` and `uv run ruff format --check src tests`.
+
+Frontend request and history-mapping tests need Node.js 20+:
+
+```text
+node --test tests/ui/api.test.mjs
+```
+
+The browser smoke check uses Playwright and a running Uvicorn server. It mocks
+all user/conversation/provider API calls, uses dummy credentials and makes no
+live model requests. Install Playwright locally without adding app dependencies
+with `npm install --no-save --package-lock=false playwright`, then run
+`npx playwright install chromium` and `node tests/ui/browser.cjs`.
+It saves desktop/mobile screenshots under the ignored `artifacts/ui/` directory.
+Optional environment variables: `AI_WORKSPACE_UI_URL` for the server URL,
+`AI_WORKSPACE_BROWSER_CHANNEL=msedge` to use an installed Edge browser, and
+`AI_WORKSPACE_PLAYWRIGHT_PATH` for an existing Playwright package path.
 
 The full test suite needs a **dedicated test PostgreSQL database**, with
 `AI_WORKSPACE_DATABASE_URL` pointing to it. Apply `uv run alembic upgrade head` to
