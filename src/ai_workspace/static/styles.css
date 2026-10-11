@@ -52,11 +52,6 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .history-empty { padding: 28px 15px; color: #a0a5af; font-size: 12px; line-height: 1.9; text-align: center; }
 .history-empty svg { width: 25px; height: 25px; display: block; margin: 0 auto 12px; color: #b9bdc7; }
 .history-empty p { margin: 0; }
-.history-search { display: flex; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 4px 7px; margin-bottom: 10px; gap: 7px; }
-.history-search > svg { width: 15px; color: #989daa; }
-.history-search input { width: 100%; min-width: 0; border: 0; background: transparent; font-size: 12px; padding: 7px 0; outline-offset: 0; }
-.history-search .icon-button { padding: 3px; }
-.history-search .icon-button svg { width: 14px; height: 14px; }
 .sidebar-bottom { margin-top: 15px; }
 .connection-card { display: flex; align-items: center; padding: 14px 10px; gap: 10px; background: linear-gradient(110deg, #eeedf7, #f4f4f9); border: 1px solid #e7e6f1; border-radius: 10px; margin-bottom: 18px; }
 .small-spark { display: grid; place-items: center; width: 32px; height: 32px; background: #fff; border-radius: 9px; color: #8680c6; }
