@@ -31,7 +31,7 @@ frontend build step or separate development server.
 - Send with Enter, insert a newline with Shift+Enter. Replies use the existing
   non-streaming chat endpoint. A failed turn restores the draft; network failures
   advise checking saved history before retrying because completion is uncertain.
-- The sidebar lists and searches your saved conversation titles. Selecting a
+- The sidebar lists your saved conversation titles. Selecting a
   conversation reads the `messages` JSON array in authenticated
   `GET /conversations/{conversation_id}`. Ownership is checked before reading
   history, which retains chronological order and is rendered as user/assistant

@@ -85,11 +85,10 @@ function updateModel() {
 function renderHistory() {
   const container = $("history-list");
   container.replaceChildren();
-  const query = $("history-search").value.trim().toLowerCase();
-  const conversations = state.conversations.filter((item) => item.title.toLowerCase().includes(query));
+  const conversations = state.conversations;
   if (!conversations.length) {
     const empty = element("div", "history-empty");
-    empty.append(icon("chat"), element("p", "", state.historyError || (!state.user ? "登录后，你的对话会出现在这里" : query ? "没有找到相关对话" : "还没有对话，从一个想法开始吧")));
+    empty.append(icon("chat"), element("p", "", state.historyError || (!state.user ? "登录后，你的对话会出现在这里" : "还没有对话，从一个想法开始吧")));
     if (state.historyError) {
       const retry = element("button", "text-button", "重新加载");
       retry.addEventListener("click", refreshHistory);
@@ -580,16 +579,6 @@ $("account-tab").addEventListener("click", () => showSettings("account"));
 $("provider-tab").addEventListener("click", () => showSettings("provider"));
 $("back-to-chat").addEventListener("click", showChat);
 $("refresh-history").addEventListener("click", refreshHistory);
-$("search-toggle").addEventListener("click", () => {
-  $("history-search-wrap").hidden = !$("history-search-wrap").hidden;
-  if (!$("history-search-wrap").hidden) $("history-search").focus();
-});
-$("search-close").addEventListener("click", () => {
-  $("history-search-wrap").hidden = true;
-  $("history-search").value = "";
-  renderHistory();
-});
-$("history-search").addEventListener("input", renderHistory);
 $("auth-switch").addEventListener("click", () => setAuthMode(state.authMode === "login" ? "register" : "login"));
 $("auth-form").addEventListener("submit", authenticate);
 $("auth-dialog").addEventListener("cancel", (event) => { if (state.authBusy) event.preventDefault(); });

@@ -125,10 +125,6 @@ async function run() {
     await page.locator("#send-button").click();
     await page.getByText("连接中断，消息可能已在服务端完成。请先点击左侧当前对话检查结果，再决定是否重发。").waitFor();
     networkError = false;
-    await page.locator("#search-toggle").click();
-    await page.locator("#history-search").fill("不存在的标题");
-    await page.getByText("没有找到相关对话").waitFor();
-    await page.locator("#search-close").click();
     await page.locator("#provider-nav").click();
     await page.locator("#remove-key").click();
     await page.locator("#confirm-remove-key").click();
@@ -166,7 +162,7 @@ async function run() {
     await page.locator("#sidebar-scrim").click({ position: { x: 350, y: 400 } });
     await page.locator("#sidebar").waitFor({ state: "hidden" });
     assert.deepEqual(errors, []);
-    console.log("Browser checks passed: registration/login, credentials, model/effort, chat/history, safe rendering, failures, search, logout/expiry, desktop/mobile.");
+    console.log("Browser checks passed: registration/login, credentials, model/effort, chat/history, safe rendering, failures, logout/expiry, desktop/mobile.");
   } catch (error) {
     await page.screenshot({ path: "artifacts/ui/failure.png", fullPage: true });
     console.error("UI feedback:", await page.locator("#auth-feedback").textContent());
